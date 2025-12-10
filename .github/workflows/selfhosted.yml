@@ -28,7 +28,7 @@ on:
           - 'LineageOS 16.0'
           - 'CyanogenMOD 14.1'
           - 'AOSP'
-      BUILD_DIFFERENT_ROM_CMD:
+      BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
         default: "echo 'Build Starting!'"
@@ -99,7 +99,7 @@ jobs:
           sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
           envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
           rm -rf ${PWD}/crave.conf.sample          
-        if
+        fi
       env:
         CRAVE_USERNAME: ${{  secrets.CRAVE_USERNAME  }}
         CRAVE_TOKEN: ${{  secrets.CRAVE_TOKEN  }}
@@ -113,7 +113,7 @@ jobs:
           else
             echo "Error! Runner not found!"
             exit 1
-          if
+          fi
 
         if tmux has-session -t ghactions; then 
           echo "Runner is already Running" 
@@ -122,7 +122,7 @@ jobs:
           tmux new-session -d -s ghactions 
           tmux send-keys -t ghactions './actions-runner/run.sh' Enter 
           echo "Runner Started"
-        if "
+        fi "
   prepare:
     name: Prepare for Building
     runs-on: ubuntu-latest
@@ -135,7 +135,7 @@ jobs:
         if [[ -z "${{ secrets.CRAVE_TOKEN }}" || -z "${{ secrets.CRAVE_USERNAME }}" ]]; then
           echo "Crave Credentials Not Configured! Exiting..."
           exit 1
-        if
+        fi
         bash scripts/env-checker.sh
 
     - name: Set Project variables
@@ -210,7 +210,7 @@ jobs:
             LUNCH="riseup ${{ github.event.inputs.PRODUCT_NAME }} ${{ github.event.inputs.BUILD_TYPE }}"
         else
             LUNCH="breakfast ${{ github.event.inputs.PRODUCT_NAME }} ${{ github.event.inputs.BUILD_TYPE }}"
-        if
+        fi
 
           if [[ "${{ github.event.inputs.LOCAL_MANIFEST }}" =~ \.xml(/)?$ ]]; then
             local_manifest_url="${{ github.event.inputs.LOCAL_MANIFEST }}"
@@ -218,7 +218,7 @@ jobs:
             LOCAL_MANIFEST="mkdir -p .repo/local_manifests && rm -rf .repo/local_manifests/* || true && curl -o .repo/local_manifests/local_manifest.xml ${local_manifest_url}"
           else
             export LOCAL_MANIFEST="git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{github.event.inputs.LOCAL_MANIFEST_BRANCH}} .repo/local_manifests"
-          if
+          fi
 
         echo "Building on ${{ github.event.inputs.BASE_PROJECT }} project"
         echo "PROJECTFOLDER=$PROJECTFOLDER" >> "$GITHUB_OUTPUT"
@@ -249,7 +249,7 @@ jobs:
           cat .repo/local_manifests/*.xml
         else
           echo "Displaying is disabled through secrets."
-        if
+        fi
     outputs:
       PROJECTFOLDER: ${{ steps.proj-variables.outputs.PROJECTFOLDER }}
       PROJECTID: ${{ steps.proj-variables.outputs.PROJECTID }}
@@ -294,7 +294,7 @@ jobs:
           echo "Repo installation complete."
         else
           echo "Repo already installed."
-        if
+        fi
       continue-on-error: true
       
       # Generate 'git' credential in base of the workflow's author.
@@ -314,7 +314,7 @@ jobs:
           $REPO_INIT
         else
           ${{ github.event.inputs.BUILD_DIFFERENT_ROM }}
-        if 
+        fi 
 
         bash -c "$LOCAL_MANIFEST"
 
@@ -388,13 +388,13 @@ jobs:
             exit 1
           else
             echo ".bashrc looks okay, no explicit errors"
-          if
+          fi
 
           # Double check to be sure
           if echo "$output" | grep -q "cannot execute"; then
             echo "You have a broken .bashrc, please contact a Crave.io Administrator"
             exit 1
-          if
+          fi
         )
 
         # Create a project folder
@@ -416,18 +416,18 @@ jobs:
           sudo chmod 777 /crave-devspaces
         else
           echo "We are already running in devspace... Skipping Symlinks"
-        if
+        fi
         if grep -q "$PROJECTFOLDER" <(crave clone list --json | jq -r '.clones[]."Cloned At"') || [[ "${DCDEVSPACE}" == "1" ]]; then
           crave clone destroy -y $PROJECTFOLDER || echo "Error removing $PROJECTFOLDER"
         else          
         echo "Skipping removal"
-        if
+        fi
 
         if [[ $DCDEVSPACE == *1* ]]; then
           crave clone create --projectID $PROJECTID $PROJECTFOLDER || echo "Crave clone create failed!"
         else
           mkdir -p $PROJECTFOLDER
-        if
+        fi
         
       # Check-out in order to access the repository's files.
     - name: Check-out to repository
@@ -461,7 +461,7 @@ jobs:
           envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
           rm -rf ${PWD}/crave.conf.sample       
           cp crave.conf $PROJECTFOLDER 
-        if
+        fi
         if [[ -z "${{ secrets.CUSTOM_YAML }}" ]]; then
           cp configs/crave/crave.yaml.aosp $PROJECTFOLDER/.repo/manifests/crave.yaml
           echo "No Custom Configuration Found, Using Template!"
@@ -469,7 +469,7 @@ jobs:
           touch $PROJECTFOLDER/.repo/manifests/crave.yaml || true
           echo "${{ secrets.CUSTOM_YAML }}" > $PROJECTFOLDER/.repo/manifests/crave.yaml
           echo "Custom Configuration Found!"
-        if
+        fi
       env:
         CRAVE_USERNAME: ${{  secrets.CRAVE_USERNAME  }}
         CRAVE_TOKEN: ${{  secrets.CRAVE_TOKEN  }}
@@ -483,16 +483,16 @@ jobs:
         else
           echo "Running $REPO_INIT"
           $REPO_INIT
-        if
+        fi
 
         if [ "${{ github.event.inputs.BUILD_DIFFERENT_ROM }}" == "echo 'Build Starting!'" ]; then
           export BUILD_DIFFERENT_ROM="$REPO_INIT"
-          echo "Building $BUILD_DIFFERENT_ROM_CMD"
+          echo "Building $BUILD_DIFFERENT_ROM"
         else
           export BUILD_DIFFERENT_ROM="${{ github.event.inputs.BUILD_DIFFERENT_ROM }}"
-          echo "Building $BUILD_DIFFERENT_ROM_CMD"
-        if
-        echo "BUILD_DIFFERENT_ROM=$BUILD_DIFFERENT_ROM_CMD" >> "$GITHUB_ENV"
+          echo "Building $BUILD_DIFFERENT_ROM"
+        fi
+        echo "BUILD_DIFFERENT_ROM=$BUILD_DIFFERENT_ROM" >> "$GITHUB_ENV"
         echo "We will be building with $LUNCH"
 
       # Create a 'crave' job for building.
@@ -504,12 +504,12 @@ jobs:
         jq '.projects = []' ~/crave.conf > tmp && mv tmp ~/crave.conf
         if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
            export CLEAN="--clean"
-        if
+        fi
 
         if [[ -n "${{ secrets.PAID }}" ]]; then
            echo "Paid Build... Tokens will be consumed."
            export PAID="--platform aosp-silver"
-        if
+        fi
 
         echo "Build is queued! Please wait for your build to start."
         echo "Check foss.crave.io Dashboard to see builds"
@@ -518,7 +518,7 @@ jobs:
 
         crave ${{ secrets.CRAVE_FLAGS }} run --no-patch ${PAID} ${CLEAN} -- "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
-        $BUILD_DIFFERENT_ROM_CMD ; \
+        $BUILD_DIFFERENT_ROM ; \
         $LOCAL_MANIFEST && \
 
         # Sync the repositories
@@ -526,7 +526,7 @@ jobs:
           /usr/bin/resync # For compatibility with Omansh's Docker image 
         else
           /opt/crave/resync.sh
-        if && \
+        fi && \
 
         # Set up build environment
         export BUILD_USERNAME=${{ github.actor }} ; \
@@ -582,7 +582,7 @@ jobs:
           jobMessage="has been Cancelled!"
         elif [ "$jobStatus" = "failure" ]; then
           jobMessage="has Failed!"
-        if
+        fi
 
         send_telegram_message "Crave Project: ${{ github.event.inputs.BASE_PROJECT }}%0ACrave ProjectID: $PROJECTID %0ABuild for ${{ github.event.inputs.DEVICE_NAME }} $jobMessage %0ACheck Progress at: %0Ahttps://github.com/$(echo "${{ github.repository }}" | sed 's@_@\\_@g')/actions/runs/${{ github.run_id }}"
         # Todo: error.log link
@@ -633,4 +633,4 @@ jobs:
           crave clone destroy -y $PROJECTFOLDER || echo "Error removing $PROJECTFOLDER"
         else          
           echo "Skipping removal"
-        if
+        fi
