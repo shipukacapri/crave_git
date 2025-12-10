@@ -294,7 +294,7 @@ jobs:
           echo "Repo installation complete."
         else
           echo "Repo already installed."
-        fi
+        if
       continue-on-error: true
       
       # Generate 'git' credential in base of the workflow's author.
