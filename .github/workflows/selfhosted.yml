@@ -607,6 +607,39 @@ jobs:
         crave push token.txt -d $(crave ssh -- pwd | grep -v Select | sed -s 's/\r//g')/
         crave ssh -- "export GH_UPLOAD_LIMIT="${{ secrets.GH_UPLOAD_LIMIT }}"; bash /opt/crave/github-actions/upload.sh '${{ github.run_id }}' '${{ github.event.inputs.DEVICE_NAME }}'  '${{ github.repository }}' '${{ github.event.inputs.PRODUCT_NAME }}-${{ github.run_id }}' '${{ secrets.EXTRA_FILES }}'"
 
+      # Upload ROM to PixelDrain (for >2GB builds)
+    - name: Upload ROM to PixelDrain
+      if: ${{ success() }}
+      run: |
+        cd $PROJECTFOLDER
+
+        echo "Looking for ROM zip..."
+        ROM_FILE=$(ls out/target/product/*/*.zip | head -n 1)
+
+        if [ -z "$ROM_FILE" ]; then
+          echo "ERROR: ROM zip not found"
+          exit 1
+        fi
+
+        echo "Uploading $ROM_FILE to PixelDrain..."
+        RESPONSE=$(curl -s \
+          -T "$ROM_FILE" \
+          -u :${{ secrets.PIXELDRAIN_API_KEY }} \
+          https://pixeldrain.com/api/file/)
+
+        echo "PixelDrain response: $RESPONSE"
+
+        FILE_ID=$(echo "$RESPONSE" | jq -r '.id')
+
+        if [ "$FILE_ID" = "null" ]; then
+          echo "ERROR: PixelDrain upload failed"
+          exit 1
+        fi
+
+        echo "PIXELDRAIN_URL=https://pixeldrain.com/u/$FILE_ID" >> $GITHUB_ENV
+        echo "PixelDrain URL: https://pixeldrain.com/u/$FILE_ID"
+        
+     
       # Pull Errors and Display them
     - name: Display error.log
       if: ${{ failure() }}
